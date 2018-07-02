@@ -1,0 +1,2 @@
+# HealthKitSwift
+使用HealthKit,封装各类获取健康数据和修改健康数据的方法
