@@ -18,40 +18,39 @@ class Skoal: NSObject {
     static let shared = Skoal.init()
     var store:HKHealthStore = HKHealthStore()
     
-    // MARK:获取权限
+    /// MARK:获取权限
     func requestHealthPermission(block:@escaping HealthStorePermissionResponseBlock) -> Void {
-        if #available(iOS 8.0, *){
-            if(!HKHealthStore.isHealthDataAvailable()){
+        if #available(iOS 8.0, *) {
+            if (!HKHealthStore.isHealthDataAvailable()) {
                 print("Skoal:该设备不支持HealthKit")
-            }else{
-            let store = HKHealthStore()
-            let readObjectTypes:Set = self.readObjectTypes()
-            let writeObjectTypes:Set = self.writeObjectTypes()
-            store.requestAuthorization(toShare: (writeObjectTypes as! Set<HKSampleType>), read: readObjectTypes) { (success, error) in
-                if(success){
-                    block(.HealthStorePermissionResponseSuccess)
-                }else{
-                    block(.HealthStorePermissionResponseError)
+            } else {
+                let store = HKHealthStore()
+                let readObjectTypes:Set = self.readObjectTypes()
+                let writeObjectTypes:Set = self.writeObjectTypes()
+                store.requestAuthorization(toShare: (writeObjectTypes as! Set<HKSampleType>), read: readObjectTypes) { (success, error) in
+                    if (success) {
+                        block(.HealthStorePermissionResponseSuccess)
+                    } else {
+                        block(.HealthStorePermissionResponseError)
+                    }
                 }
             }
-        }
-        }else{
+        } else {
             print("Skoal:HealthKit暂不支持iOS8以下系统,请更新你的系统。")
         }
     }
     
-    // MARK:获取步数
-    func readStepCountFromHealthStore(completion:@escaping (_ value:Double,_ error:Error?) -> Void) -> Void{
+    /// MARK:获取步数
+    func readStepCountFromHealthStore(completion:@escaping (_ value:Double,_ error:Error?) -> Void) -> Void {
         let stepCountType = HKObjectType.quantityType(forIdentifier: .stepCount)!
         let startSort = NSSortDescriptor.init(key: HKSampleSortIdentifierStartDate, ascending: false)
         let endSort = NSSortDescriptor.init(key: HKSampleSortIdentifierEndDate, ascending: false)
         let predicate = self.predicateSampleByToday()
-        let query = HKSampleQuery.init(sampleType: stepCountType, predicate: predicate, limit: 0, sortDescriptors: [startSort,endSort]) { (query, results, error) in
+        let query = HKSampleQuery.init(sampleType: stepCountType, predicate: predicate, limit: 0, sortDescriptors: [startSort, endSort]) { (query, results, error) in
             var sum:Double = 0
-            for sample in results!{
+            for sample in results! {
                 let tmpSample:HKQuantitySample = sample as! HKQuantitySample
                 print(sample)
-                print(sample.classForCoder)
                 sum = sum + Double((String.init(format: "%@", tmpSample.quantity)).components(separatedBy: " ")[0])!
             }
             completion(sum, error)
@@ -66,7 +65,7 @@ class Skoal: NSObject {
         let predicate = self.predicateSampleByPeriodOfTimeWithStartTime(startTime: startTime, endTime: endTime)
         let query = HKSampleQuery.init(sampleType: stepCountType, predicate: predicate, limit: 0, sortDescriptors: [startSort,endSort]) { (query, results, error) in
             var sum:Double = 0
-            for sample in results!{
+            for sample in results! {
                 let tmpSample:HKQuantitySample = sample as! HKQuantitySample
                 sum = sum + Double((String.init(format: "%@", tmpSample.quantity)).components(separatedBy: " ")[0])!
             }
@@ -107,10 +106,10 @@ class Skoal: NSObject {
         let endSort = NSSortDescriptor.init(key: HKSampleSortIdentifierEndDate, ascending: false)
         let predicate = self.predicateSampleByLatestData()
         let query = HKSampleQuery.init(sampleType: heightType!, predicate: predicate, limit: 0, sortDescriptors: [startSort,endSort]) { (query, results, error) in
-            if (results?.count)! > 0{
-                let height = Double((String.init(format: "%@", (results?.first)!)).components(separatedBy: " ")[0])!
+            if (results?.count)! > 0 {
+                let height = Double((String.init(format: "%@", (results?.last)!)).components(separatedBy: " ")[1])!
                 completion(height, error)
-            }else{
+            } else {
                 completion(0, error)
             }
         }
@@ -127,16 +126,16 @@ class Skoal: NSObject {
     }
     
     // MARK: 获取体重
-    func readBodyMassFromHealthStore(completion:@escaping (_ value:Double,_ error:Error?) -> Void) -> Void{
+    func readBodyMassFromHealthStore(completion:@escaping (_ value:Double,_ error:Error?) -> Void) -> Void {
         let bodyMassType = HKObjectType.quantityType(forIdentifier: .bodyMass)
         let startSort = NSSortDescriptor.init(key: HKSampleSortIdentifierStartDate, ascending: false)
         let endSort = NSSortDescriptor.init(key: HKSampleSortIdentifierEndDate, ascending: false)
         let predicate = self.predicateSampleByLatestData()
         let query = HKSampleQuery.init(sampleType: bodyMassType!, predicate: predicate, limit: 0, sortDescriptors: [startSort,endSort]) { (query, results, error) in
-            if (results?.count)! > 0{
-            let bodyMass = Double((String.init(format: "%@", (results?.first)!)).components(separatedBy: " ")[0])!
+            if (results?.count)! > 0 {
+                let bodyMass = Double((String.init(format: "%@", (results?.last)!)).components(separatedBy: " ")[1])!
                 completion(bodyMass, error)
-            }else{
+            } else {
                 completion(0, error)
             }
         }
@@ -239,9 +238,9 @@ class Skoal: NSObject {
         let quantity = HKQuantity.init(unit: HKUnit.count(), doubleValue: flightsClimbed)
         let sample = HKQuantitySample.init(type: flightsClimbedType!, quantity: quantity, start: Date(), end: Date(), metadata: nil)
         self.store.save(sample) { (success, error) in
-            if(success){
+            if (success) {
                 completion(true, error)
-            }else{
+            } else {
                 completion(false, error)
             }
         }
@@ -268,13 +267,12 @@ class Skoal: NSObject {
         let quantity = HKQuantity.init(unit: HKUnit.init(from: "count/min"), doubleValue: respiratoryRate)
         let sample = HKQuantitySample.init(type: respiratoryRateType!, quantity: quantity, start: Date(), end: Date(), metadata: nil)
         self.store.save(sample) { (success, error) in
-            if(success){
+            if (success) {
                 completion(true, error)
-            }else{
+            } else {
                 completion(false, error)
             }
         }
-        
     }
     
     // MARK: 膳食能量消耗
@@ -287,7 +285,7 @@ class Skoal: NSObject {
             if (results?.count)! > 0{
                 let respiratoryRate = Double((String.init(format: "%@", (results?.first)!)).components(separatedBy: " ")[0])!
                 completion(respiratoryRate, error)
-            }else{
+            } else {
                 completion(0, error)
             }
         }
@@ -299,9 +297,9 @@ class Skoal: NSObject {
         let quantity = HKQuantity.init(unit: HKUnit.kilocalorie(), doubleValue: dietaryEnergyConsumed)
         let sample = HKQuantitySample.init(type: dietaryEnergyConsumedType!, quantity: quantity, start: Date(), end: Date(), metadata: nil)
         self.store.save(sample) { (success, error) in
-            if(success){
+            if (success) {
                 completion(true, error)
-            }else{
+            } else {
                 completion(false, error)
             }
         }
@@ -317,7 +315,7 @@ class Skoal: NSObject {
             if (results?.count)! > 0{
                 let oxygenSaturation = Double((String.init(format: "%@", (results?.first)!)).components(separatedBy: " ")[0])!
                 completion(oxygenSaturation, error)
-            }else{
+            } else {
                 completion(0, error)
             }
         }
@@ -334,7 +332,7 @@ class Skoal: NSObject {
             if (results?.count)! > 0{
                 let bodyTemperature = Double((String.init(format: "%@", (results?.first)!)).components(separatedBy: " ")[0])!
                 completion(bodyTemperature, error)
-            }else{
+            } else {
                 completion(0, error)
             }
         }
@@ -348,7 +346,7 @@ class Skoal: NSObject {
         self.store.save(sample) { (success, error) in
             if(success){
                 completion(true, error)
-            }else{
+            } else {
                 completion(false, error)
             }
         }
@@ -364,7 +362,7 @@ class Skoal: NSObject {
             if (results?.count)! > 0{
                 let bloodGlucose = Double((String.init(format: "%@", (results?.first)!)).components(separatedBy: " ")[0])!
                 completion(bloodGlucose, error)
-            }else{
+            } else {
                 completion(0, error)
             }
         }
@@ -376,9 +374,9 @@ class Skoal: NSObject {
         let quantity = HKQuantity.init(unit: HKUnit.init(from: "mg/dl"), doubleValue: bloodGlucose)
         let sample = HKQuantitySample.init(type: bloodGlucoseType!, quantity: quantity, start: Date(), end: Date(), metadata: nil)
         self.store.save(sample) { (success, error) in
-            if(success){
+            if (success) {
                 completion(true, error)
-            }else{
+            } else {
                 completion(false, error)
             }
         }
@@ -394,7 +392,7 @@ class Skoal: NSObject {
             if (results?.count)! > 0{
                 let bloodPressureSystolic = Double((String.init(format: "%@", (results?.first)!)).components(separatedBy: " ")[0])!
                 completion(bloodPressureSystolic, error)
-            }else{
+            } else {
                 completion(0, error)
             }
         }
@@ -406,9 +404,9 @@ class Skoal: NSObject {
         let quantity = HKQuantity.init(unit: HKUnit.millimeterOfMercury(), doubleValue: bloodPressureSystolic)
         let sample = HKQuantitySample.init(type: bloodPressureSystolicType!, quantity: quantity, start: Date(), end: Date(), metadata: nil)
         self.store.save(sample) { (success, error) in
-            if(success){
+            if (success) {
                 completion(true, error)
-            }else{
+            } else {
                 completion(false, error)
             }
         }
@@ -423,7 +421,7 @@ class Skoal: NSObject {
             if (results?.count)! > 0{
                 let bloodPressureDiastolic = Double((String.init(format: "%@", (results?.first)!)).components(separatedBy: " ")[0])!
                 completion(bloodPressureDiastolic, error)
-            }else{
+            } else {
                 completion(0, error)
             }
         }
@@ -435,9 +433,9 @@ class Skoal: NSObject {
         let quantity = HKQuantity.init(unit: HKUnit.millimeterOfMercury(), doubleValue: bloodPressureDiastolic)
         let sample = HKQuantitySample.init(type: bloodPressureDiastolicType!, quantity: quantity, start: Date(), end: Date(), metadata: nil)
         self.store.save(sample) { (success, error) in
-            if(success){
+            if (success) {
                 completion(true, error)
-            }else{
+            } else {
                 completion(false, error)
             }
         }
@@ -451,7 +449,7 @@ class Skoal: NSObject {
         let predicate = self.predicateSampleByLatestData()
         let query = HKSampleQuery.init(sampleType: appleStandHourType!, predicate: predicate, limit: 0, sortDescriptors: [startSort,endSort]) { (query, results, error) in
             var appleStandHour:Double = 0.0
-            if (results?.count)! > 0{
+            if (results?.count)! > 0 {
                 appleStandHour = appleStandHour + Double((String.init(format: "%@", (results?.first)!)).components(separatedBy: " ")[0])!
             }
             completion(appleStandHour, error)
@@ -464,19 +462,19 @@ class Skoal: NSObject {
         var sex = ""
         do{
             let sexObject = try self.store.biologicalSex()
-                switch sexObject.biologicalSex {
-                case .notSet:
-                    sex = "未设置"
-                case .male:
-                    sex = "女性"
-                case .female:
-                    sex = "男性"
-                case .other:
-                    sex = "其他"
-                }
-                completion(sex, true)
+            switch sexObject.biologicalSex {
+            case .notSet:
+                sex = "未设置"
+            case .male:
+                sex = "女性"
+            case .female:
+                sex = "男性"
+            case .other:
+                sex = "其他"
+            }
+            completion(sex, true)
         }catch{
-             completion(sex, true)
+            completion(sex, true)
         }
     }
     
@@ -564,7 +562,7 @@ class Skoal: NSObject {
                 break
             }
             completion(type, true)
-        }catch{
+        } catch {
             completion(nil, false)
         }
     }
@@ -576,10 +574,10 @@ class Skoal: NSObject {
         let endSort = NSSortDescriptor.init(key: HKSampleSortIdentifierEndDate, ascending: false)
         let predicate = self.predicateSampleByLatestData()
         let query = HKSampleQuery.init(sampleType: type!, predicate: predicate, limit: 0, sortDescriptors: [startSort,endSort]) { (query, results, error) in
-            if(error != nil){
+            if (error != nil) {
                 completion(nil, error!)
-            }else{
-                if (results?.count)! > 0{
+            } else {
+                if (results?.count)! > 0 {
                     let sleepAnalysis = Double((String.init(format: "%@", (results?.first)!)).components(separatedBy: " ")[0])!
                     completion(sleepAnalysis, error)
                 }else{
@@ -597,13 +595,13 @@ class Skoal: NSObject {
         let endSort = NSSortDescriptor.init(key: HKSampleSortIdentifierEndDate, ascending: false)
         let predicate = self.predicateSampleByLatestData()
         let query = HKSampleQuery.init(sampleType: type!, predicate: predicate, limit: 0, sortDescriptors: [startSort,endSort]) { (query, results, error) in
-            if(error != nil){
+            if(error != nil) {
                 completion(nil, error!)
-            }else{
+            } else {
                 if (results?.count)! > 0{
                     let menstrualFlow = Double((String.init(format: "%@", (results?.first)!)).components(separatedBy: " ")[0])!
                     completion(menstrualFlow, error)
-                }else{
+                } else {
                     completion(0, error)
                 }
             }
@@ -618,13 +616,13 @@ class Skoal: NSObject {
         let endSort = NSSortDescriptor.init(key: HKSampleSortIdentifierEndDate, ascending: false)
         let predicate = self.predicateSampleByLatestData()
         let query = HKSampleQuery.init(sampleType: type!, predicate: predicate, limit: 0, sortDescriptors: [startSort,endSort]) { (query, results, error) in
-            if(error != nil){
+            if (error != nil) {
                 completion(nil, error!)
-            }else{
+            } else {
                 if (results?.count)! > 0{
                     let menstrualFlow = Double((String.init(format: "%@", (results?.first)!)).components(separatedBy: " ")[0])!
                     completion(menstrualFlow, error)
-                }else{
+                } else {
                     completion(0, error)
                 }
             }
@@ -632,20 +630,20 @@ class Skoal: NSObject {
         self.store.execute(query)
     }
     
-    //MARK SexualActivity(性行为)
+    /// MARK SexualActivity(性行为)
     func readSexualActivityFromHealthStore(completion:@escaping (_ value:Double?,_ error:Error?) -> Void) -> Void {
         let type = HKObjectType.categoryType(forIdentifier: .sexualActivity)
         let startSort = NSSortDescriptor.init(key: HKSampleSortIdentifierStartDate, ascending: false)
         let endSort = NSSortDescriptor.init(key: HKSampleSortIdentifierEndDate, ascending: false)
         let predicate = self.predicateSampleByLatestData()
         let query = HKSampleQuery.init(sampleType: type!, predicate: predicate, limit: 0, sortDescriptors: [startSort,endSort]) { (query, results, error) in
-            if(error != nil){
+            if (error != nil) {
                 completion(nil, error!)
-            }else{
+            } else {
                 if (results?.count)! > 0{
                     let sexualActivity = Double((String.init(format: "%@", (results?.first)!)).components(separatedBy: " ")[0])!
                     completion(sexualActivity, error)
-                }else{
+                } else {
                     completion(0, error)
                 }
             }
@@ -685,7 +683,7 @@ class Skoal: NSObject {
         let predicate = HKQuery.predicateForSamples(withStart: nil, end: endDate, options: HKQueryOptions.init(rawValue: 0))
         return predicate
     }
-
+    
     //predicate sample is time period data(谓词样本为时间段数据)
     func predicateSampleByPeriodOfTimeWithStartTime(startTime:String, endTime:String) -> NSPredicate {
         let formatter = DateFormatter()
@@ -801,5 +799,5 @@ class Skoal: NSObject {
         ]
         return set
     }
-
+    
 }

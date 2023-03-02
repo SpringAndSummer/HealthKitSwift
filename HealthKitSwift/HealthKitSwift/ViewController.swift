@@ -232,29 +232,33 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
         case 1:     // StepCount(步数)
             if indexPath.row == 0 {
                 Skoal.shared.readStepCountFromHealthStore { (value, error) in
-                    if((error) != nil){
-                         print(error!)
-                    }else{
-                        print("你今天走的步数为\(value)")
+                    if ((error) != nil) {
+                        print("读取步数数据错误:\(error.debugDescription)")
+                    } else {
+                        print("读取步数数据为\(value)")
                     }
                 }
             } else if indexPath.row == 1 {
-                Skoal.shared.readStepCountFromHealthStoreWithStartTime(startTime: "2018-05-17 08:00", endTime: "2018-05-17 22:00") { (value, error) in
+                Skoal.shared.readStepCountFromHealthStoreWithStartTime(startTime: "2023-03-2 14:28", endTime: "2023-03-2 14:50") { (value, error) in
                     print("\(value) \(String(describing: error))")
                 }
         } else if indexPath.row == 2 {
-                Skoal.shared.writeStepCountToHealthStoreWithUnit(setpCount: 888) { (response, error) in
+                Skoal.shared.writeStepCountToHealthStoreWithUnit(setpCount: 15) { (response, error) in
                     print(response)
                 }
             } else if indexPath.row == 3 {
-                Skoal.shared.writeStepCountToHealthStoreWithUnit(setpCount: 888, startTime: "2018-05-17 08:00", endTime: "2018-05-17 22:00") { (response, error) in
+                Skoal.shared.writeStepCountToHealthStoreWithUnit(setpCount: 30, startTime: "2023-03-2 14:49", endTime: "2023-03-2 14:50") { (response, error) in
                     print(response)
                 }
             }
         case 2:     // Height(身高)
             if indexPath.row == 0 {
                 Skoal.shared.readHeightFromHealthStoreWithCompletion { (value, error) in
-                    print("height = \(value)")
+                    if ((error) != nil) {
+                        print("读取身高数据错误:\(error.debugDescription)")
+                    } else {
+                        print("读取身高为:\(value)cm")
+                    }
                 }
             } else if indexPath.row == 1 {
                 Skoal.shared.writeHeightToHealthStoreWithUnit(height: 1.80) { (response, error) in
@@ -264,7 +268,11 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
         case 3:     // BodyMass(体重)
             if indexPath.row == 0 {
                 Skoal.shared.readBodyMassFromHealthStore{ (value: Double, error: Error?) in
-                    print("\(value)\n\(error.debugDescription)")
+                    if ((error) != nil) {
+                        print("读取体重数据错误:\(error.debugDescription)")
+                    } else {
+                        print("读取体重为:\(value)KG")
+                    }
                 }
             } else if indexPath.row == 1 {
                 Skoal.shared.writeBodyMassToHealthStore(bodyMass: 70) { (success, error) in
